@@ -916,7 +916,7 @@ class Extractor {
     let r; try { r = await this.rec.recognize(img); } catch (e) { console.warn('LV recognition failed', e); return { v: 0, conf: 0 }; }
     this.dbg.lvText = r.text; this.dbg.lvConf = r.conf;
     let res = { v: 0, conf: 0 };
-    const digits = r.text.replace(/\D/g, '');
+    const digits = r.text.replace(/[OoQD]/g, '0').replace(/[Il|]/g, '1').replace(/\D/g, '');   // 等級只會有數字：把常被誤認的字母（O→0、I/l→1）先換回來
     if (digits.length >= 2) { const lv = parseInt(digits.length >= 3 ? digits.slice(-3) : digits, 10); if (Number.isFinite(lv)) res = { v: lv, conf: r.conf }; }
     this.lvCache = { arr: new Uint8ClampedArray(img.data), res };
     return res;
@@ -1818,7 +1818,7 @@ async function tick() {
     else if (extractor.mesoSkip) mskip = true;
     if (mapImg) { const mp = await extractor.readMap(mapImg); if (mp.name) tracker.noteMap(mp.name); }
     updateDbg(src2);
-    if (lv.conf < 0.8 || ex.conf < 0.8) tracker.setStatus('讀取中...');
+    if (lv.conf < 0.6 || ex.conf < 0.8) tracker.setStatus('讀取中...');   // 等級字體有描邊，三位數信心常落在 0.7 上下，門檻放寬到 0.6
     else {
       const idx = Math.trunc(lv.v);
       if (idx >= 0 && idx < EXP_REQ.length) {
